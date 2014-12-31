@@ -1,0 +1,32 @@
+# für UI gmoccapy
+# Sections for display options ------------------------------------------------
+[DISPLAY]
+DISPLAY = gmoccapy
+#DISPLAY=axis
+LATHE = 1
+BACK_TOOL_LATHE = 0
+
+# Cycle time, in milliseconds, that display will sleep between polls
+# für axis in Sekunden, für gmoccapy in ms !!!!!!!!!!!!!!!!!!!!!!!!!
+# deshalb einfach auf ganz wenig gestellt.
+CYCLE_TIME =            .1
+
+# Highest value that will be allowed for feed override, 1.0 = 100%
+MAX_FEED_OVERRIDE =     3
+MAX_SPINDLE_OVERRIDE =  2
+MIN_SPINDLE_OVERRIDE = .1
+
+# Max and default jog speeds in units per second
+MAX_LINEAR_VELOCITY =   166
+DEFAULT_LINEAR_VELOCITY = 5
+MAX_ANGULAR_VELOCITY = 234
+
+# Prefix to be used
+PROGRAM_PREFIX = /home/user/linuxcnc/nc_files
+
+# Introductory graphic
+INTRO_GRAPHIC = linuxcnc.gif
+INTRO_TIME = .1
+
+# list of selectable jog increments
+INCREMENTS = 1.000 mm, 0.100 mm, 0.010 mm, 0.001 mm

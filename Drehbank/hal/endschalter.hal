@@ -1,0 +1,10 @@
+##################
+# EINGÄNGE Endschalter
+# Diese Netze werden von Parport oder Simulation gefüttert
+
+net Xhomesw => axis.0.home-sw-in 
+#axis.0.neg-lim-sw-in
+net Zhomesw => axis.2.home-sw-in 
+#axis.0.neg-lim-sw-in
+
+##############################

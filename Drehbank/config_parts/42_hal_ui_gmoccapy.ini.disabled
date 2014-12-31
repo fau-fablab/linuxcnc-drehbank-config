@@ -1,0 +1,4 @@
+###
+# [HAL] fortgesetzt
+
+POSTGUI_HALFILE = hal/gui.gmoccapy/gmoccapy_postgui.hal

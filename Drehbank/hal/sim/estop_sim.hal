@@ -1,0 +1,4 @@
+# create a signal for the estop loopback
+net estop-out <= iocontrol.0.user-enable-out
+
+
