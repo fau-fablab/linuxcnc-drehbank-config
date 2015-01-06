@@ -1,3 +1,0 @@
-####
-#[HAL] fortgesetzt
-HALFILE = hal/stepper/chinakram_pinout.hal
