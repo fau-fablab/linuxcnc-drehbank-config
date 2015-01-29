@@ -1,0 +1,19 @@
+[Desktop Entry]
+Comment[de]=
+Comment=
+Exec=/home/user/linuxcnc/configs/linuxnc-drehbank-config/Drehbank/run.sh
+GenericName[de]=Drehbank
+GenericName=Drehbank
+Icon=/usr/share/pixmaps/linuxcncicon.png
+MimeType=
+Name[de]=Drehbank
+Name=Drehbank
+Path=
+StartupNotify=true
+Terminal=true
+TerminalOptions=
+Type=Application
+X-DBUS-ServiceName=
+X-DBUS-StartupType=none
+X-KDE-SubstituteUID=false
+X-KDE-Username=

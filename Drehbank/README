@@ -2,6 +2,9 @@ Conf siehe config_parts/*.ini
 start: run.sh
 
 TODO:
+Umändern nach MESA
+Nothalt wenn Vfield wegfällt - da kommt grad nur "smart serial comm error" :(
+
 Varianten-Umschaltung besser als mit "nach .disabled umbenennen"
 
 BUGS:
@@ -9,3 +12,25 @@ hässliche UI (axis) kann noch nicht durch hübsche (gmoccapy) ersetzt werden, w
 
 WONTFIX:
 Herumfahren während ein Job pausiert ist geht nicht (kann linuxcnc stable nicht. Dafür gibt es zwar patches, Stichwort jog-while-pause, aber es gibt wichtigeres zum Zeitvertreib als das auszuprobieren.)
+
+
+
+
+
+-----------------------
+richtige Firmware für mesa Karte laden:
+
+# 5i25.zip von mesa Webseite http://www.mesanet.com/software/parallel/5i25.zip
+
+unzip 5i25.zip
+cd 5i25/utils/linux
+su
+# BUG: wenn --device nicht angegeben wird, macht er stillschweigend nichts
+./mesaflash --device 5i25 --write ../../configs/hostmot2/5i25_7i76x2.bit 
+./mesaflash --verify ../../configs/hostmot2/5i25_7i76x2.bit 
+
+reboot
+
+
+pncconf für testconfig...
+Obacht: Spannung Vfield muss an sein beim Start, sonst wird FPGA Karte nicht gefunden
