@@ -1,8 +1,14 @@
+wo ist die Linuxdoku??
+
+neu geändert:
+doch VESA deaktiviert, normaler Grafiktreiber
+
+
+------
 Conf siehe config_parts/*.ini
 start: run.sh
 
 TODO:
-Umändern nach MESA
 Nothalt wenn Vfield wegfällt - da kommt grad nur "smart serial comm error" :(
 
 Varianten-Umschaltung besser als mit "nach .disabled umbenennen"

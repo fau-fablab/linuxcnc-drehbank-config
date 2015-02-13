@@ -12,5 +12,5 @@ for file in config_parts/*.ini; do
 	echo "####### $file #####" >> $CONF
 	cat $file >> $CONF
 done
-linuxcnc drehbank.ini
+linuxcnc drehbank.ini || sleep 10
 mv drehbank.ini drehbank.ini.old

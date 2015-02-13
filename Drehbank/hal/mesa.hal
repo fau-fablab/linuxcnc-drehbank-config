@@ -1,0 +1,139 @@
+
+loadrt hostmot2
+loadrt hm2_pci config=" num_encoders=1 num_pwmgens=0 num_3pwmgens=0 num_stepgens=2 sserial_port_0=00xxx " 
+setp     hm2_5i25.0.watchdog.timeout_ns 10000000
+
+addf hm2_5i25.0.read servo-thread
+#addf motion-command-handler servo-thread
+#addf motion-controller servo-thread
+addf hm2_5i25.0.write         servo-thread
+addf hm2_5i25.0.pet_watchdog  servo-thread
+
+# TODO Watchdog testen
+
+
+
+
+#######################
+# Grundlagen: Bahnplanung GCode etc.
+
+# connect position commands from motion module to step generator
+net Xpos-cmd axis.0.motor-pos-cmd => hm2_5i25.0.stepgen.00.position-cmd
+net Zpos-cmd axis.2.motor-pos-cmd => hm2_5i25.0.stepgen.01.position-cmd
+
+# connect position feedback from step generators
+# to motion module
+net Xpos-fb hm2_5i25.0.stepgen.00.position-fb => axis.0.motor-pos-fb
+net Zpos-fb hm2_5i25.0.stepgen.01.position-fb => axis.2.motor-pos-fb
+
+net Xen => hm2_5i25.0.stepgen.00.enable
+net Zen => hm2_5i25.0.stepgen.01.enable
+
+####################
+
+# set stepgen module scaling - get values from ini file
+# zur Angleichung an die simulation auf INPUT_SCALE umbenannt
+setp hm2_5i25.0.stepgen.00.position-scale [AXIS_0]INPUT_SCALE
+setp hm2_5i25.0.stepgen.01.position-scale [AXIS_2]INPUT_SCALE
+
+# set stepgen module accel limits - get values from ini file
+setp hm2_5i25.0.stepgen.00.maxaccel [AXIS_0]STEPGEN_MAXACCEL
+setp hm2_5i25.0.stepgen.01.maxaccel [AXIS_2]STEPGEN_MAXACCEL
+
+# ergänzt zur Auslagerung in ini-File:
+# Timings
+setp hm2_5i25.0.stepgen.00.steplen [STEPPER_TIMING]STEPGEN_STEP_LEN
+setp hm2_5i25.0.stepgen.00.stepspace [STEPPER_TIMING]STEPGEN_STEP_SPACE
+setp hm2_5i25.0.stepgen.00.dirhold [STEPPER_TIMING]STEPGEN_DIR_HOLD
+setp hm2_5i25.0.stepgen.00.dirsetup [STEPPER_TIMING]STEPGEN_DIR_SETUP
+setp hm2_5i25.0.stepgen.01.steplen [STEPPER_TIMING]STEPGEN_STEP_LEN
+setp hm2_5i25.0.stepgen.01.stepspace [STEPPER_TIMING]STEPGEN_STEP_SPACE
+setp hm2_5i25.0.stepgen.01.dirhold [STEPPER_TIMING]STEPGEN_DIR_HOLD
+setp hm2_5i25.0.stepgen.01.dirsetup [STEPPER_TIMING]STEPGEN_DIR_SETUP
+
+
+
+
+
+
+
+
+
+
+
+# TB2
+# Step/Dir 0 ist Achse X
+# Step/Dir 1 ist Achse Z
+
+
+
+# TODO spindle-on an echten Pin schalten
+net spindle-on <= motion.spindle-on
+
+
+######################
+# Inputs TB5
+######################
+# In16 Drive 1 Alarm (Fehlermeldung des Steppertreibers)
+# TODO
+net drive1-alarm <= hm2_5i25.0.7i76.0.0.input-16
+
+# In17 Drive 2 Alarm (Fehlermeldung des Steppertreibers)
+# TODO
+net drive2-alarm <= hm2_5i25.0.7i76.0.0.input-17
+
+# In18 Notaus
+# TODO wozu ist estop-ext
+net estop-ext <= hm2_5i25.0.7i76.0.0.input-18-not
+net estop-out <= hm2_5i25.0.7i76.0.0.input-18
+
+# In19 Futterhaube
+# TODO
+net futterhaube <= hm2_5i25.0.7i76.0.0.input-19
+
+# In20 Endschalter Z
+net Zhomesw <= hm2_5i25.0.7i76.0.0.input-20
+
+# In21 Endschalter X
+net Xhomesw <= hm2_5i25.0.7i76.0.0.input-21
+
+# In22-... leer
+
+#############
+# Outputs TB5: die Bezeichnung gilt immer für Signal an, also 24V
+##############
+# Out8 Drive1 Enable
+net Xen => hm2_5i25.0.7i76.0.0.output-08
+    
+# Out9 Drive2 Enable
+net Zen => hm2_5i25.0.7i76.0.0.output-09
+
+# Out10 Kühlschmierung an
+# TODO ist im Schaltschrank als Toggle-Puls, wir wollen aber an/aus
+net coolant-flood => hm2_5i25.0.7i76.0.0.output-10
+
+# Out11 Schutzhaube freigeben (wenn aus, löst die Schutzhaube den Notaus aus)
+net haube-freigeben => hm2_5i25.0.7i76.0.0.output-11
+
+# Out12 Ampel blau
+net ampel-blau => hm2_5i25.0.7i76.0.0.output-12
+
+# Out13 Ampel rot
+net ampel-rot => hm2_5i25.0.7i76.0.0.output-13
+
+# Out14 Ampel grün
+net ampel-gruen => hm2_5i25.0.7i76.0.0.output-14
+
+# Out15 Ampel gelb
+# temporär auf estop out
+net estop-out => hm2_5i25.0.7i76.0.0.output-15
+
+# Input TB5
+# In0-15 leer
+
+# Outputs TB5
+# Out0 Ampel weiß
+# kaputt??? Kurzschluss auf Kabel oder in Lampenfuß
+# hm2_5i25.0.7i76.0.0.output-00 
+
+
