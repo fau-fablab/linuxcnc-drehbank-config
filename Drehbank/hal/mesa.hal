@@ -116,24 +116,21 @@ net coolant-flood => hm2_5i25.0.7i76.0.0.output-10
 net haube-freigeben => hm2_5i25.0.7i76.0.0.output-11
 
 # Out12 Ampel blau
-net ampel-blau => hm2_5i25.0.7i76.0.0.output-12
+net tool-change => hm2_5i25.0.7i76.0.0.output-12
 
 # Out13 Ampel rot
-net ampel-rot => hm2_5i25.0.7i76.0.0.output-13
+net estop-out => hm2_5i25.0.7i76.0.0.output-13
+setp hm2_5i25.0.7i76.0.0.output-13-invert TRUE
 
 # Out14 Ampel grün
-net ampel-gruen => hm2_5i25.0.7i76.0.0.output-14
+net program-is-running halui.program.is-running => hm2_5i25.0.7i76.0.0.output-14
 
 # Out15 Ampel gelb
-# temporär auf estop out
-net estop-out => hm2_5i25.0.7i76.0.0.output-15
+net program-is-paused halui.program.is-paused => hm2_5i25.0.7i76.0.0.output-15
 
 # Input TB5
 # In0-15 leer
 
 # Outputs TB5
 # Out0 Ampel weiß
-# kaputt??? Kurzschluss auf Kabel oder in Lampenfuß
-# hm2_5i25.0.7i76.0.0.output-00 
-
-
+net futterhaube => hm2_5i25.0.7i76.0.0.output-00 

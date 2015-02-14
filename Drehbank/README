@@ -6,6 +6,8 @@ doch VESA deaktiviert, normaler Grafiktreiber
 
 ------
 Conf siehe config_parts/*.ini
+-> config_parts/basic.ini: Höchstgeschwindigkeiten und Grundlegendes
+-> ...
 start: run.sh
 
 TODO:
