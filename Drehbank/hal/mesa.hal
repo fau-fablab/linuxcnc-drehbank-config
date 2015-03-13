@@ -1,6 +1,6 @@
 
 loadrt hostmot2
-loadrt hm2_pci config=" num_encoders=1 num_pwmgens=0 num_3pwmgens=0 num_stepgens=2 sserial_port_0=00xxx " 
+loadrt hm2_pci config="num_encoders=1 num_pwmgens=0 num_3pwmgens=0 num_stepgens=2 sserial_port_0=00xxx" 
 setp     hm2_5i25.0.watchdog.timeout_ns 10000000
 
 addf hm2_5i25.0.read servo-thread
@@ -9,7 +9,7 @@ addf hm2_5i25.0.read servo-thread
 addf hm2_5i25.0.write         servo-thread
 addf hm2_5i25.0.pet_watchdog  servo-thread
 
-# TODO Watchdog testen
+# TODO diesen Watchdog testen...
 
 
 
@@ -53,8 +53,7 @@ setp hm2_5i25.0.stepgen.01.dirsetup [STEPPER_TIMING]STEPGEN_DIR_SETUP
 
 
 
-
-
+ 	
 
 
 
@@ -66,9 +65,31 @@ setp hm2_5i25.0.stepgen.01.dirsetup [STEPPER_TIMING]STEPGEN_DIR_SETUP
 # Step/Dir 1 ist Achse Z
 
 
-
+######################
+# Spindel
+######################
 # TODO spindle-on an echten Pin schalten
 net spindle-on <= motion.spindle-on
+net spindle-on => hm2_5i25.0.7i76.0.0.spinena
+net spindle-reverse motion.spindle-reverse <= hm2_5i25.0.7i76.0.0.spindir
+# Spindel PWM in 0 ... 1  (1=100%)
+setp hm2_5i25.0.7i76.0.0.spinout-scalemax 1
+setp hm2_5i25.0.7i76.0.0.spinout-maxlim 1
+setp hm2_5i25.0.7i76.0.0.spinout-minlim 0.2
+
+loadrt scale names=scale_spindle
+addf scale_spindle servo-thread
+net spindle-speed-cmd-abs <= motion.spindle-speed-out-abs
+# 5000 rpm = 100%
+# 0 rpm = 20% (etwa)
+setp scale_spindle.offset 0.2
+setp scale_spindle.gain 0.00016
+net spindle-speed-cmd-abs => scale_spindle.in
+net spindle-pwm-out scale_spindle.out => hm2_5i25.0.7i76.0.0.spinout
+
+
+
+
 
 
 ######################
@@ -83,13 +104,10 @@ net drive1-alarm <= hm2_5i25.0.7i76.0.0.input-16
 net drive2-alarm <= hm2_5i25.0.7i76.0.0.input-17
 
 # In18 Notaus
-# TODO wozu ist estop-ext
-net estop-ext <= hm2_5i25.0.7i76.0.0.input-18-not
-net estop-out <= hm2_5i25.0.7i76.0.0.input-18
+net estop-in <= hm2_5i25.0.7i76.0.0.input-18-not
 
 # In19 Futterhaube
-# TODO
-net futterhaube <= hm2_5i25.0.7i76.0.0.input-19
+net futterhaube-offen <= hm2_5i25.0.7i76.0.0.input-19-not
 
 # In20 Endschalter Z
 net Zhomesw <= hm2_5i25.0.7i76.0.0.input-20
@@ -97,23 +115,31 @@ net Zhomesw <= hm2_5i25.0.7i76.0.0.input-20
 # In21 Endschalter X
 net Xhomesw <= hm2_5i25.0.7i76.0.0.input-21
 
-# In22-... leer
+# In22 loopback von Out9 (für Watchdog)
+net watchdog-loopback-in <= hm2_5i25.0.7i76.0.0.input-22
+
+# In23-... leer
 
 #############
 # Outputs TB5: die Bezeichnung gilt immer für Signal an, also 24V
 ##############
-# Out8 Drive1 Enable
+# Out8 Drive1+2 Enable
+# TODO liefert Xen und Zen das gleiche Signal?
+# -> or-Gatter o.ä. verbauen
 net Xen => hm2_5i25.0.7i76.0.0.output-08
-    
-# Out9 Drive2 Enable
-net Zen => hm2_5i25.0.7i76.0.0.output-09
+setp hm2_5i25.0.7i76.0.0.output-08-invert true
+
+# Out9 loopback an In22 (für Watchdog)
+net watchdog-loopback-out => hm2_5i25.0.7i76.0.0.output-09
 
 # Out10 Kühlschmierung an
 # TODO ist im Schaltschrank als Toggle-Puls, wir wollen aber an/aus
-net coolant-flood => hm2_5i25.0.7i76.0.0.output-10
+# deshalb auskommentiert
+# net coolant-flood => hm2_5i25.0.7i76.0.0.output-10
 
 # Out11 Schutzhaube freigeben (wenn aus, löst die Schutzhaube den Notaus aus)
-net haube-freigeben => hm2_5i25.0.7i76.0.0.output-11
+net haube-sperren => hm2_5i25.0.7i76.0.0.output-11
+setp hm2_5i25.0.7i76.0.0.output-11-invert TRUE
 
 # Out12 Ampel blau
 net tool-change => hm2_5i25.0.7i76.0.0.output-12
@@ -133,4 +159,111 @@ net program-is-paused halui.program.is-paused => hm2_5i25.0.7i76.0.0.output-15
 
 # Outputs TB5
 # Out0 Ampel weiß
-net futterhaube => hm2_5i25.0.7i76.0.0.output-00 
+net futterhaube-offen => hm2_5i25.0.7i76.0.0.output-00 
+
+
+
+
+
+#######################################################
+# Notaus-Überwachung, auch Fehler-Eingänge Drives + Watchdog
+#######################################################
+loadrt match8 names=match8_errors
+addf match8_errors servo-thread
+net watchdog-ok => match8_errors.a0
+setp match8_errors.b0 TRUE
+net drive1-alarm => match8_errors.a1
+setp match8_errors.b1 FALSE
+net drive2-alarm => match8_errors.a2
+setp match8_errors.b2 FALSE
+net estop-in => match8_errors.a3
+setp match8_errors.b3 FALSE
+net futterhaube-fehler => match8_errors.a4
+setp match8_errors.b4 FALSE
+net encoder-decode-error => match8_errors.a5
+setp match8_errors.b5 FALSE
+
+# .a6 bis .a8 wäre noch frei für weitere Dinge...
+net estop-out <= match8_errors.out
+
+
+#######################################################
+# Futterhaube sperren gegen spindle-enable
+# (-> estop)
+#######################################################
+loadrt and2 names=and2_futterhaube_fehler
+addf and2_futterhaube_fehler servo-thread
+net futterhaube-offen => and2_futterhaube_fehler.in0
+net spindle-on => and2_futterhaube_fehler.in1
+net futterhaube-fehler <= and2_futterhaube_fehler.out
+
+#######################################################
+# Watchdog der die IO-Karte überwacht
+#######################################################
+loadrt not names=not_watchdog
+addf not_watchdog servo-thread
+net watchdog-loopback-in => not_watchdog.in
+net watchdog-loopback-out <= not_watchdog.out
+
+loadrt watchdog num_inputs=1
+addf watchdog.process servo-thread
+addf watchdog.set-timeouts servo-thread
+net watchdog-loopback-in => watchdog.input-0
+setp watchdog.enable-in TRUE
+setp watchdog.timeout-0 0.01
+net watchdog-ok <= watchdog.ok-out
+
+
+
+#######################################################
+# Logik Haubenfreigabe
+#######################################################
+loadrt or2 names=or2_haube_sperren
+addf or2_haube_sperren servo-thread
+net program-is-running => or2_haube_sperren.in0
+net spindle-on => or2_haube_sperren.in1
+net haube-sperren <= or2_haube_sperren.out
+
+
+#######################################################
+# Spindle Encoder feedback
+#######################################################
+
+# spindle speed control
+net spindle-speed-cmd  motion.spindle-speed-out
+
+# 4000 steps/U
+setp hm2_5i25.0.encoder.00.scale 4000
+# TODO keine ahnung ob das geht... aber wie will man es testen?
+net encoder-decode-error <= hm2_5i25.0.encoder.00.quad-error
+setp hm2_5i25.0.encoder.00.quad-error-enable TRUE
+
+# TODO funktioniert gewindedrehen?
+# encoder reset control
+# hook up motion controller's sync output
+net spindle-index-enable motion.spindle-index-enable <=> hm2_5i25.0.encoder.00.index-enable
+
+# report our revolution count to the motion controller
+net spindle-pos hm2_5i25.0.encoder.00.position => motion.spindle-revs
+
+# for spindle velocity estimate
+loadrt lowpass names=lowpass_velocity
+loadrt scale names=scale_to_rpm
+net spindle-rps-raw hm2_5i25.0.encoder.00.velocity => lowpass_velocity.in
+net spindle-rps-filtered lowpass_velocity.out => scale_to_rpm.in motion.spindle-speed-in
+net spindle-rpm-filtered scale_to_rpm.out
+setp scale_to_rpm.gain 60
+setp lowpass_velocity.gain .07
+addf lowpass_velocity servo-thread
+addf scale_to_rpm servo-thread
+
+# for at-speed detection
+loadrt near names=near_speed
+addf near_speed servo-thread
+setp near_speed.scale 1.1
+setp near_speed.difference 10
+net spindle-speed-cmd => near_speed.in1
+net spindle-rpm-filtered => near_speed.in2
+net spindle-at-speed near_speed.out motion.spindle-at-speed
+
+net  spindle-fwd <= motion.spindle-forward
