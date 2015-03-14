@@ -85,10 +85,14 @@ net spindle-speed-cmd-abs <= motion.spindle-speed-out-abs
 setp scale_spindle.offset 0.2
 setp scale_spindle.gain 0.00016
 net spindle-speed-cmd-abs => scale_spindle.in
-net spindle-pwm-out scale_spindle.out => hm2_5i25.0.7i76.0.0.spinout
+net spindle-pwm-out-unlimited scale_spindle.out 
 
-
-
+loadrt limit1 names=limit1_spindle
+addf limit1_spindle servo-thread
+net spindle-pwm-out-unlimited => limit1_spindle.in
+setp limit1_spindle.min 0
+setp limit1_spindle.max 1
+net spindle-pwm-out limit1_spindle.out => hm2_5i25.0.7i76.0.0.spinout
 
 
 
