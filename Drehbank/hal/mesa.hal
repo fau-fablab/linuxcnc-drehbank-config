@@ -53,13 +53,6 @@ setp hm2_5i25.0.stepgen.01.dirsetup [STEPPER_TIMING]STEPGEN_DIR_SETUP
 
 
 
- 	
-
-
-
-
-
-
 # TB2
 # Step/Dir 0 ist Achse X
 # Step/Dir 1 ist Achse Z
@@ -91,7 +84,8 @@ loadrt limit1 names=limit1_spindle
 addf limit1_spindle servo-thread
 net spindle-pwm-out-unlimited => limit1_spindle.in
 setp limit1_spindle.min 0
-setp limit1_spindle.max 1
+# Begrenzung auf 4800 (Futter Maximaldrehzahl) = 0.2 + 0.8*4800/5000
+setp limit1_spindle.max 0.968
 
 
 # Spindelsignal auf 0% schalten (statt 20% Ruhepegel), wenn ausgeschaltet
@@ -117,14 +111,15 @@ net spindle-on-float <= conv_s32_float-spindle-on.out
 # Inputs TB5
 ######################
 # In16 Drive 1 Alarm (Fehlermeldung des Steppertreibers)
-# TODO
+# weiter unten für estop verwendet
 net drive1-alarm <= hm2_5i25.0.7i76.0.0.input-16
 
 # In17 Drive 2 Alarm (Fehlermeldung des Steppertreibers)
-# TODO
+# weiter unten für estop verwendet
 net drive2-alarm <= hm2_5i25.0.7i76.0.0.input-17
 
 # In18 Notaus
+# weiter unten für estop verwendet
 net estop-in <= hm2_5i25.0.7i76.0.0.input-18-not
 
 # In19 Futterhaube
@@ -132,9 +127,11 @@ net futterhaube-offen <= hm2_5i25.0.7i76.0.0.input-19-not
 
 # In20 Endschalter Z
 net Zhomesw <= hm2_5i25.0.7i76.0.0.input-20
+net Zhomesw => axis.2.neg-lim-sw-in
 
 # In21 Endschalter X
 net Xhomesw <= hm2_5i25.0.7i76.0.0.input-21
+net Xhomesw => axis.0.neg-lim-sw-in
 
 # In22 loopback von Out9 (für Watchdog)
 net watchdog-loopback-in <= hm2_5i25.0.7i76.0.0.input-22
@@ -180,6 +177,7 @@ net program-is-paused halui.program.is-paused => hm2_5i25.0.7i76.0.0.output-15
 
 # Outputs TB5
 # Out0 Ampel weiß
+# TODO (wunsch) auch die Polycarbonat-Haube mit anzeigen. Dafür haben wir noch keinen Input.
 net futterhaube-offen => hm2_5i25.0.7i76.0.0.output-00 
 
 
@@ -238,10 +236,21 @@ net watchdog-ok <= watchdog.ok-out
 
 #######################################################
 # Logik Haubenfreigabe
+# Haube sperren, wenn: spindle-on || (program-is-running && !tool-change)
 #######################################################
+loadrt not names=not_toolchange
+addf not_toolchange servo-thread
+net tool-change => not_toolchange.in
+net tool-change-invert <= not_toolchange.out
+
+loadrt and2 names=and2_programm_bewegt_sich
+addf and2_programm_bewegt_sich servo-thread
+net program-is-running => and2_programm_bewegt_sich.in0
+net tool-change-invert => and2_programm_bewegt_sich.in1
+
 loadrt or2 names=or2_haube_sperren
 addf or2_haube_sperren servo-thread
-net program-is-running => or2_haube_sperren.in0
+
 net spindle-on => or2_haube_sperren.in1
 net haube-sperren <= or2_haube_sperren.out
 
