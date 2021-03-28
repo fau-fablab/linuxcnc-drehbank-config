@@ -80,18 +80,20 @@ setp scale_spindle.gain 0.00016
 net spindle-speed-cmd-abs => scale_spindle.in
 net spindle-pwm-out-unlimited scale_spindle.out 
 
-loadrt limit1 names=limit1_spindle
-addf limit1_spindle servo-thread
-net spindle-pwm-out-unlimited => limit1_spindle.in
-setp limit1_spindle.min 0
+loadrt limit2 names=limit2_spindle
+addf limit2_spindle servo-thread
+net spindle-pwm-out-unlimited => limit2_spindle.in
+setp limit2_spindle.min 0
 # Begrenzung auf 4800 (Futter Maximaldrehzahl) = 0.2 + 0.8*4800/5000
-setp limit1_spindle.max 0.968
+setp limit2_spindle.max 0.968
+# Anstieg der Drehzahl begrenzen: 10 Sekunden Hochlaufzeit von 0 auf Maximaldrehzahl ($limit2_spindle.maxv pro Sekunde von 0 bis 1)
+setp limit2_spindle.maxv 0.1
 
 
 # Spindelsignal auf 0% schalten (statt 20% Ruhepegel), wenn ausgeschaltet
 loadrt mult2 names=mult2_spindle
 addf mult2_spindle servo-thread
-net spindle-pwm-always-on limit1_spindle.out => mult2_spindle.in0
+net spindle-pwm-always-on limit2_spindle.out => mult2_spindle.in0
 net spindle-on-float => mult2_spindle.in1
 net spindle-pwm-out mult2_spindle.out => hm2_5i25.0.7i76.0.0.spinout
 
@@ -247,10 +249,12 @@ loadrt and2 names=and2_programm_bewegt_sich
 addf and2_programm_bewegt_sich servo-thread
 net program-is-running => and2_programm_bewegt_sich.in0
 net tool-change-invert => and2_programm_bewegt_sich.in1
+net program-is-running-and-no-toolchange <= and2_programm_bewegt_sich.out
 
 loadrt or2 names=or2_haube_sperren
 addf or2_haube_sperren servo-thread
 
+net program-is-running-and-no-toolchange => or2_haube_sperren.in0
 net spindle-on => or2_haube_sperren.in1
 net haube-sperren <= or2_haube_sperren.out
 
