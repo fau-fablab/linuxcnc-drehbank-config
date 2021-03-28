@@ -1,8 +1,11 @@
 T0 P0 ;a 
-T1 P1 X-4.75 Y0 Z10.6 Q2 ;abstech flach 
-T2 P2 X-0.81 Y0 Z0.105 Q2 ;55 j-form 
-T3 P3 X0 Y0 Z0 Q2 ;80 l-form (refwkz) 
-T4 P4 X-3.7 Y0 Z-5.15 Q2 ;abstechstern 
-T5 P5 ;added 20141231 
-T6 P6 ;added 20141231 
-T7 P7 X7.9 Y0 Z-11 ;55 n-form (korrekturwerte unklar) 
+T1 P1 X15.404 Z10.6 Q2 ;abstech flach 
+T2 P2 X-0.81 Z0.184 Q2 ;55 j-form 
+T3 P3 Q2 ;80 l-form (refwkz) 
+T4 P4 X-3.55 Z-5.0166 Q2 ;abstechstern 
+T5 P5 X-37.288 Z51.277 ;55 ?-form innen 90grad 
+T6 P6 X-36.687 Z80.693 ;80 l-form innen 90grad 
+T7 P7 X7.9 Z-11 ;55 n-form (korrekturwerte unklar) 
+T9 P9 X3.756 Z-5 ;gewindeschneider aussen, platte 0.5-1.5 
+T10 P10 X2.841 Z-5.602 ;todo: gewindeschneider 14-8 zoellig in halter 9 
+T8 P8 X-33.5855 Z38.791 ;gewindeschneider innen, platte 0.5-1.5 
