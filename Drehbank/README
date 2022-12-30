@@ -1,7 +1,12 @@
-wo ist die Linuxdoku??
 
-neu geändert:
-doch VESA deaktiviert, normaler Grafiktreiber
+Rechner und Linux-Einstellungen für den damaligen Rechner von ca 2015:
+Intel Core 2 Quad
+Linuxcnc 2.6 Debian wheezy image
+Bootoptionen: isolcpus=1,2,3 idle=poll
+[ eventuell i915.modeset=0; wahrscheinlich damals wieder deaktiviert ]
+Sound deaktiviert
+Parport 378 EPP
+
 
 
 ------
