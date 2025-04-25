@@ -1,0 +1,42 @@
+# HW-independent part of spindle
+
+# This file is the "glue logic" between LinuxCNC spindle control and the HW interface.
+# It provides the following interface signals to be used in mesa.hal (real HW) or spindle_sim.hal (simulated HW).
+# The idea is that if anything in the LinuxCNC spindle control changes on upgrades, we only need to edit it here and not twice for real and simulated HW.
+
+# OUTPUT SIGNALS (to HW) provided by this file
+# -> spindle-speed-cmd: spindle speed control (to HW)
+# -> spindle-fwd: spindle direction (to HW)
+# -> spindle-rev: inverted spindle direction signal (to HW)
+# INPUT SIGNALS (from HW) needed by this file:
+# <- spindle-rps-raw: raw (not filtered) spindle velocity in rotations per second
+# <- spindle-pos: raw spindle position in revolutions
+# I/O (bidirectional) signals:
+# <-> spindle-index-enable: encoder index (for some reason this is a bidirectional signal; just connect and don't ask how it works)
+
+
+net spindle-speed-cmd <= spindle.0.speed-out
+net spindle-fwd <= spindle.0.forward
+net spindle-rev <= spindle.0.reverse
+net spindle-pos => spindle.0.revs
+net spindle-index-enable <=> spindle.0.index-enable 
+
+loadrt lowpass names=lowpass_velocity
+loadrt scale names=scale_to_rpm
+net spindle-rps-raw => lowpass_velocity.in
+net spindle-rps-filtered lowpass_velocity.out => scale_to_rpm.in spindle.0.speed-in
+net spindle-rpm-filtered scale_to_rpm.out
+setp scale_to_rpm.gain 60
+setp lowpass_velocity.gain .07
+addf lowpass_velocity servo-thread
+addf scale_to_rpm servo-thread
+
+# for at-speed detection
+loadrt near names=near_speed
+addf near_speed servo-thread
+setp near_speed.scale 1.1
+setp near_speed.difference 10
+net spindle-speed-cmd => near_speed.in1
+net spindle-rpm-filtered => near_speed.in2
+net spindle-at-speed near_speed.out => spindle.0.at-speed
+

@@ -1,0 +1,9 @@
+###
+# [HAL] fortgesetzt
+
+HALFILE = hal/sim/stepgen_sim.hal
+HALFILE = hal/sim/estop_sim.hal
+HALFILE = hal/sim/simulated_home.hal
+HALFILE = hal/sim/spindle_sim.hal
+
+

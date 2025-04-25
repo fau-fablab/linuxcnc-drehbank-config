@@ -5,7 +5,7 @@
 
 # General section -------------------------------------------------------------
 [EMC]
-VERSION =               $Revision$
+VERSION =               1.1
 MACHINE =               drehbank
 #DEBUG =               0x7FFFFFFF
 DEBUG = 0
@@ -59,20 +59,49 @@ SERVO_PERIOD =          1000000
 
 # Trajectory planner section --------------------------------------------------
 [TRAJ]
-AXES =             3
+AXES =             2
 COORDINATES =      X Z
 HOME =             0 0 0
 LINEAR_UNITS =     mm
 ANGULAR_UNITS =    degree
 CYCLE_TIME =       0.010
 DEFAULT_VELOCITY = 9.0
-MAX_VELOCITY =     234
+# max. Verfahrgeschwindigkeit (unabhängig von der Richtung, zusätzlich zu achsspezifischen Grenzen) - vereinfacht gleich eingestellt wie X-Achsen-Limit
+MAX_LINEAR_VELOCITY =     15
 POSITION_FILE =    speicher/position.txt
 #NO_FORCE_HOMING = 1
 
+[KINS]
+KINEMATICS =       trivkins coordinates=xz
+JOINTS =           2
+
+
 
 # First axis
-[AXIS_0]
+
+[AXIS_X]
+# Beachten: in HAL-Signalen heißt diese Achse "axis.0"
+
+# min/max Position
+# Achtung: folgende Einstellung muss in [JOINT_0] und [AXIS_X] identisch sein!
+MIN_LIMIT =                     -115
+# Achtung: folgende Einstellung muss in [JOINT_0] und [AXIS_X] identisch sein!
+MAX_LIMIT =                     -1
+
+# max. Geschwingkeit
+# mm/s
+# Achtung: folgende Einstellung muss in [JOINT_0] und [AXIS_X] identisch sein!
+MAX_VELOCITY =                  15
+
+# max. Beschleunigung
+# mm/s²
+# Achtung: folgende Einstellung muss in [JOINT_0] und [AXIS_X] identisch sein!
+MAX_ACCELERATION =              40
+
+
+# Antrieb X-Achse
+[JOINT_0]
+
 TYPE =                          LINEAR
 
 # Umkehrspielkompensation
@@ -86,11 +115,14 @@ BACKLASH = 0.000
 # experimentell ermittelt
 INPUT_SCALE =                   3200
 
-# max. Geschwingkeit
-# mm/s
-# 15 40 works
+# Achtung: folgende Einstellung muss in [JOINT_0] und [AXIS_X] identisch sein! Doku siehe [AXIS_X].
 MAX_VELOCITY =                  15
+# Achtung: folgende Einstellung muss in [JOINT_0] und [AXIS_X] identisch sein! Doku siehe [AXIS_X].
 MAX_ACCELERATION =              40
+# Achtung: folgende Einstellung muss in [JOINT_0] und [AXIS_X] identisch sein! Doku siehe [AXIS_X].
+MIN_LIMIT =                     -115
+# Achtung: folgende Einstellung muss in [JOINT_0] und [AXIS_X] identisch sein! Doku siehe [AXIS_X].
+MAX_LIMIT =                     -1
 
 # maximale Beschleunigung des stepgen, bisschen mehr als MAXACCEL
 # (interner Wert, siehe Doku:
@@ -105,9 +137,8 @@ MAX_ACCELERATION =              40
 # )
 STEPGEN_MAXACCEL =              60
 
-MIN_LIMIT =                     -115
-MAX_LIMIT =                     -1
 # kurzfristig erlaubter Folgefehler (Abweichung weil stepgen nicht hinterherkommt): muss min ~10 Steps sein, also 10/INPUT_SCALE
+# [mm]
 # erhöhen, wenn Axis .. following error kommt
 # FERROR bei Eilgang, MIN_FERROR bei langsamer Fahrt
 FERROR = 0.1
@@ -117,7 +148,7 @@ MIN_FERROR = 0.1
 HOME_OFFSET =                    0
 # Freifahrposition (nach Homing fährt die Maschine dorthin)
 HOME =                           -3
-# Hinfahrgeschwindigkeit zum Schalter suchen (<0 wenn nach links)
+# Hinfahrgeschwindigkeit zum Schalter suchen (mit Vorzeichen, d.h.  <0 wenn der Schalter unteren Ende der Achse liegt und >0 am oberen)
 # Überfahrweg des Schalters darf nicht überschritten werden! Bremsweg eigentlich ? = v²/2a =  HOME_SEARCH_VEL ² / 2 MAX_ACCELERATION
 HOME_SEARCH_VEL =                3
 # langsames rausfahren zum Schalter messen
@@ -133,29 +164,40 @@ HOME_IS_SHARED = 0
 # Bei Deaktivieren des Antriebs muss Achse neu referenziert werden - sonst Crashgefahr
 VOLATILE_HOME = 1
 
-# Y-Achse gibts ned
-[AXIS_1]
-INPUT_SCALE = 1
-STEPGEN_MAXACCEL = 1
-SEARCH_VEL=0
-LATCH_VEL=0
-USE_INDEX=NO
-HOME_SEQUENCE=0
 
 # Z-Achse
-[AXIS_2]
-# alle Erklärungen siehe AXIS_0
-TYPE =                          LINEAR
+# Beachten: in HAL-Signalen heißt diese Achse "axis.1"
+
+
+[AXIS_Z]
+# Achtung: folgende Einstellung muss in [JOINT_1] und [AXIS_Z] identisch sein! Doku siehe [JOINT_1].
 MAX_VELOCITY =                  5
+# Achtung: folgende Einstellung muss in [JOINT_1] und [AXIS_Z] identisch sein! Doku siehe [JOINT_1].
+MAX_ACCELERATION =              10
+# Achtung: folgende Einstellung muss in [JOINT_1] und [AXIS_Z] identisch sein! Doku siehe [JOINT_1].
+MIN_LIMIT = 1
+# Achtung: folgende Einstellung muss in [JOINT_1] und [AXIS_Z] identisch sein! Doku siehe [JOINT_1].
+MAX_LIMIT =                     460.0
+
+# Antrieb Z-Achse
+[JOINT_1]
+# alle Erklärungen siehe AXIS_X bzw JOINT_0
+TYPE =                          LINEAR
+# Achtung: folgende Einstellung muss in [JOINT_1] und [AXIS_Z] identisch sein!
+MAX_VELOCITY =                  5
+# Achtung: folgende Einstellung muss in [JOINT_1] und [AXIS_Z] identisch sein!
 MAX_ACCELERATION =              10
 STEPGEN_MAXACCEL =              15
 BACKLASH = 0.000
 INPUT_SCALE =                   3200
 OUTPUT_SCALE = 1.000
+# Achtung: folgende Einstellung muss in [JOINT_1] und [AXIS_Z] identisch sein!
 MIN_LIMIT = 1
+# Achtung: folgende Einstellung muss in [JOINT_1] und [AXIS_Z] identisch sein!
 MAX_LIMIT =                     460.0
 FERROR = 0.1
 MIN_FERROR = 0.1
+# Position des Endschalters (1 mm außerhalb von MIN_LIMIT damit man nicht versehentlich auf den Endschalter fahren kann)
 HOME_OFFSET =                    0
 HOME =                           3
 HOME_SEARCH_VEL =                -2
@@ -170,7 +212,7 @@ VOLATILE_HOME = 1
 # zur Zeit = 100kHz
 [STEPPER_TIMING]
 # in Nanosekungen
-# (irrelevante Notiz: all diese Timingwerte werden bei Software-Stepping implizit auf Vielfache von BASE_PERIOD aufgerundet)
+# (irrelevante Notiz: all diese Timingwerte würden bei Software-Stepping implizit auf Vielfache von BASE_PERIOD aufgerundet. Wir nutzen aber HW-Stepping.)
 # Step Pulsdauer High (rising edge = step)
 # laut Datenblatt 2.5µs high 2.5µs low
 STEPGEN_STEP_LEN = 5000
@@ -183,3 +225,17 @@ STEPGEN_DIR_SETUP = 10000
 # 2.5µs laut manual
 STEPGEN_DIR_HOLD = 5000
 
+# Skalierung Glasmaßstäbe X/Z und Handrad
+# Inkremente / mm
+[ENCODER_SCALE]
+# Glasmaßstab GP10-xxx hat in Standardeinstellung 5µm Auflösung, d.h. 200 Schritte/mm
+SCALE_X_STEPS_PER_MM = 200
+SCALE_X2_STEPS_PER_MM = 200
+SCALE_Z_STEPS_PER_MM = 200
+# Skalierungsfaktor Handrad (Inkremente / Umdrehung)
+SCALE_HANDWHEEL_STEPS_PER_REV = 100
+
+
+
+
+##############################

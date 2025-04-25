@@ -6,11 +6,11 @@ net jog-jog      jogwheel.jog-wheel-jog => gmoccapy.jog-speed-counts
 
 net jog-x        jogwheel.jog-wheel-x => axis.0.jog-counts
 net jog-y        jogwheel.jog-wheel-y => axis.1.jog-counts
-net jog-z        jogwheel.jog-wheel-z => axis.2.jog-counts
+net jog-z        jogwheel.jog-wheel-z => axis.1.jog-counts
 
 setp axis.0.jog-enable 1
 setp axis.1.jog-enable 1
-setp axis.2.jog-enable 1
+setp axis.1.jog-enable 1
 
-net scale axis.2.jog-scale <= axis.1.jog-scale <= axis.0.jog-scale <= gmoccapy.jog-increment
+net scale axis.1.jog-scale <= axis.1.jog-scale <= axis.0.jog-scale <= gmoccapy.jog-increment
 

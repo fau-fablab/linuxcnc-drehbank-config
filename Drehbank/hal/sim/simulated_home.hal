@@ -1,14 +1,18 @@
 ###
 # simulierte Endschalter
+# (Schalter X ist am positiven Ende der Achse, Z am negativen Ende!)
+
+# Signal wird in kinematics.hal weiterverwendet.
+
 loadrt comp names=comp_x,comp_z
 
-net Xhomeswpos => comp_x.in1
+net Xhomeswpos => comp_x.in0
 net Zhomeswpos => comp_z.in1
 
 sets Xhomeswpos 1.37
 sets Zhomeswpos -.42
 
-net Xpos-fb => comp_x.in0
+net Xpos-fb => comp_x.in1
 net Zpos-fb => comp_z.in0
 
 setp comp_x.hyst .02
@@ -16,6 +20,7 @@ setp comp_z.hyst .02
 
 net Xhomesw <= comp_x.out
 net Zhomesw <= comp_z.out
+
 
 addf comp_x servo-thread
 addf comp_z servo-thread

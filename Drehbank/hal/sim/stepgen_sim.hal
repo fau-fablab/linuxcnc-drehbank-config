@@ -1,0 +1,6 @@
+
+# Simulate MESA step generation unit
+
+# fake position loopback
+net Xpos-fb joint.0.motor-pos-cmd => joint.0.motor-pos-fb
+net Zpos-fb joint.1.motor-pos-cmd => joint.1.motor-pos-fb

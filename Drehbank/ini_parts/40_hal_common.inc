@@ -14,10 +14,8 @@ HALUI = halui
 # list of hal config files to run through halcmd
 #+ files are executed in the order in which they appear
 
-# Kinematik und Step-Dir-Erzeugung (ist zu eng verbunden um es aufzuteilen)
-# später durch Ansteuerung der FPGA-Karte austauschen
+# interne Verdrahtung und net-Benennung, die dann entweder mit der MESA-Karte oder mit der Simulation verbunden wird
 HALFILE = hal/kinematik.hal
-
-# interne Verdrahtung und net-Benennung, die dann entweder mit dem parport oder mit der Simulation verbunden wird
+HALFILE = hal/spindle.hal
 HALFILE = hal/endschalter.hal
 HALFILE = hal/estop.hal

@@ -1,12 +1,21 @@
 
 # first load the core RT modules that will be needed
 # kinematics
-loadrt trivkins
-# motion controller, get name and thread periods from ini file
-loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[TRAJ]AXES
+loadrt [KINS]KINEMATICS
+# motion controller, get name and thread periods from INI file
+loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS
 
 addf motion-command-handler servo-thread
 addf motion-controller servo-thread
 
-net Xen <= axis.0.amp-enable-out
-net Zen <= axis.2.amp-enable-out
+net Xen <= joint.0.amp-enable-out
+net Zen <= joint.1.amp-enable-out
+
+
+# Endschalter X/Z
+# (Schalter X ist am positiven Ende seiner Achse, Z am negativen Ende!)
+# Signal kommt aus simulated_home.hal (Simulation) oder mesa.hal (echte HW)
+net Zhomesw => joint.1.neg-lim-sw-in joint.1.home-sw-in
+net Xhomesw => joint.0.pos-lim-sw-in joint.0.home-sw-in
+
+##############################

@@ -1,16 +1,39 @@
 
 loadrt hostmot2
+# Die folgenden Optionen bestimmen (zusammen mit der geladenen Firmware), welche IOs verfügbar sind; z.T. ermöglichen sie eine Umschaltung des Pin-Typs zwischen Digital-IO und einer Spezialfunktion wie Encoder.
+# Siehe auch "man hostmot2" und "man sserial" bzw online unter https://linuxcnc.org/docs/html/man/man9/hostmot2.9.html
+# Die Reihenfolge / Zuordnung kann man wie folgt herausfinden:
+# 1. Die Zuordnung auf die "Parallelport"-Anschlüsse an der 5i25(=6i25)-Karte steht in der .pin Datei die zur jeweiligen 5i25(=6i25)-Firmware gehört (neu mit Glasmaßstab: 5i25_7i76_7i85.pin) aus /lib/firmware/hm2/5i25 bzw siehe README_Drehbank.md für die Download-URL
+# 2. Die Verbindung dieser Anschlüsse mit den tatsächlichen Anschlussklemmen steht im Handbuch der jeweiligen I/O Karte (7i76man.pdf bzw 7i85man.pdf).
+# num_encoders=6:
+#   encoder.00: an 7i76: Spindel-Encoder
+#   encoder.01: (gibt es eigentlich gar nicht; existiert nur aus LinuxCNC-internen Gründen: LinuxCNC muss entweder alle oder keinen Encoder als 2-on-1 Multiplex betreiben. Die 7i76 hat genau einen Encoder. Die 7i85 hat 2x2 Encoder die über eine Select-Leitung umgeschaltet werden. LinuxCNC tut so als hätte die 7i76 2x1 Encoder.)
+#   encoder.02: an 7i85 Anschluss ENC 0
+#   encoder.03: an 7i85 Anschluss ENC 1
+#   encoder.04: an 7i85 Anschluss ENC 2
+#   encoder.05: an 7i85 Anschluss ENC 3
+# num_stepgens=2:
+#   stepgen.00: an 7i76 Anschluss STEP0
+#   stepgen.01: an 7i76 Anschluss STEP1
+#   (STEP2...4 an 7i76 könnte man durch Erhöhung von num_stepgens aktivieren)
+# sserial_port_0: über "smart serial port" (MESA-spezifisches serielles Protokoll) angebundene Expansion-Boards
+#   ein Zeichen je internen Ausgabepin (?)
+#   (0/1/2 = als smart-serial-port aktiv, in Modus 0/1/2; Modus-Bedeutung je nach Gerät)
+#   (x = Pin ist normaler IO-Pin)
+#   erste Ziffer = "0": die I/O der 7i76 sind intern über ein solches Protokoll angebunden. ("interner RS485-Port")
+#                       Modus 0 = nur Digital-IO, siehe "Software Process Data Modes" in 7i76man.pdf
+#   zweite Ziffer = "x": ext. RS485-Port der 7i76 - aktuell deaktiviert; könnte für weiteren IO aktiviert werden
+#   übrige Ziffern = "x": ext. RS485 von 7i85 - ungenutzt bzw. als normaler IO-Pin
+
+# ALT:
 loadrt hm2_pci config="num_encoders=1 num_pwmgens=0 num_3pwmgens=0 num_stepgens=2 sserial_port_0=00xxx" 
+# NEU 7i85: (TODO - neue Firmware laden und hier umstellen)
+#loadrt hm2_pci config="num_encoders=6 num_pwmgens=0 num_3pwmgens=0 num_stepgens=4 sserial_port_0=0xxxx" 
+
 setp     hm2_5i25.0.watchdog.timeout_ns 10000000
 
 addf hm2_5i25.0.read servo-thread
-#addf motion-command-handler servo-thread
-#addf motion-controller servo-thread
 addf hm2_5i25.0.write         servo-thread
-addf hm2_5i25.0.pet_watchdog  servo-thread
-
-# TODO diesen Watchdog testen...
-
 
 
 
@@ -18,13 +41,13 @@ addf hm2_5i25.0.pet_watchdog  servo-thread
 # Grundlagen: Bahnplanung GCode etc.
 
 # connect position commands from motion module to step generator
-net Xpos-cmd axis.0.motor-pos-cmd => hm2_5i25.0.stepgen.00.position-cmd
-net Zpos-cmd axis.2.motor-pos-cmd => hm2_5i25.0.stepgen.01.position-cmd
+net Xpos-cmd joint.0.motor-pos-cmd => hm2_5i25.0.stepgen.00.position-cmd
+net Zpos-cmd joint.1.motor-pos-cmd => hm2_5i25.0.stepgen.01.position-cmd
 
 # connect position feedback from step generators
 # to motion module
-net Xpos-fb hm2_5i25.0.stepgen.00.position-fb => axis.0.motor-pos-fb
-net Zpos-fb hm2_5i25.0.stepgen.01.position-fb => axis.2.motor-pos-fb
+net Xpos-fb hm2_5i25.0.stepgen.00.position-fb => joint.0.motor-pos-fb
+net Zpos-fb hm2_5i25.0.stepgen.01.position-fb => joint.1.motor-pos-fb
 
 net Xen => hm2_5i25.0.stepgen.00.enable
 net Zen => hm2_5i25.0.stepgen.01.enable
@@ -33,12 +56,12 @@ net Zen => hm2_5i25.0.stepgen.01.enable
 
 # set stepgen module scaling - get values from ini file
 # zur Angleichung an die simulation auf INPUT_SCALE umbenannt
-setp hm2_5i25.0.stepgen.00.position-scale [AXIS_0]INPUT_SCALE
-setp hm2_5i25.0.stepgen.01.position-scale [AXIS_2]INPUT_SCALE
+setp hm2_5i25.0.stepgen.00.position-scale [AXIS_X]INPUT_SCALE
+setp hm2_5i25.0.stepgen.01.position-scale [AXIS_Z]INPUT_SCALE
 
 # set stepgen module accel limits - get values from ini file
-setp hm2_5i25.0.stepgen.00.maxaccel [AXIS_0]STEPGEN_MAXACCEL
-setp hm2_5i25.0.stepgen.01.maxaccel [AXIS_2]STEPGEN_MAXACCEL
+setp hm2_5i25.0.stepgen.00.maxaccel [AXIS_X]STEPGEN_MAXACCEL
+setp hm2_5i25.0.stepgen.01.maxaccel [AXIS_Z]STEPGEN_MAXACCEL
 
 # ergänzt zur Auslagerung in ini-File:
 # Timings
@@ -61,9 +84,9 @@ setp hm2_5i25.0.stepgen.01.dirsetup [STEPPER_TIMING]STEPGEN_DIR_SETUP
 ######################
 # Spindel
 ######################
-net spindle-on <= motion.spindle-on
+net spindle-on <= spindle.0.on
 net spindle-on => hm2_5i25.0.7i76.0.0.spinena
-net spindle-reverse motion.spindle-reverse <= hm2_5i25.0.7i76.0.0.spindir
+net spindle-fwd => hm2_5i25.0.7i76.0.0.spindir
 # Spindel PWM in 0 ... 1  (1=100%)
 # da maxlim und minlim scheinbar kaputt ist, machen wir das vorher selber
 setp hm2_5i25.0.7i76.0.0.spinout-scalemax 1
@@ -72,7 +95,7 @@ setp hm2_5i25.0.7i76.0.0.spinout-minlim 0
 
 loadrt scale names=scale_spindle
 addf scale_spindle servo-thread
-net spindle-speed-cmd-abs <= motion.spindle-speed-out-abs
+net spindle-speed-cmd-abs <= spindle.0.speed-out-abs
 # 5000 rpm = 100%
 # 0 rpm = 20% (etwa)
 setp scale_spindle.offset 0.2
@@ -129,16 +152,17 @@ net futterhaube-offen <= hm2_5i25.0.7i76.0.0.input-19-not
 
 # In20 Endschalter Z
 net Zhomesw <= hm2_5i25.0.7i76.0.0.input-20
-net Zhomesw => axis.2.neg-lim-sw-in
 
 # In21 Endschalter X
 net Xhomesw <= hm2_5i25.0.7i76.0.0.input-21
-net Xhomesw => axis.0.neg-lim-sw-in
 
 # In22 loopback von Out9 (für Watchdog)
 net watchdog-loopback-in <= hm2_5i25.0.7i76.0.0.input-22
 
-# In23-... leer
+# In23 Plexi-Schutzhaube
+net plexischutzhaube-offen <= hm2_5i25.0.7i76.0.0.input-23-not
+
+# In24-... leer
 
 #############
 # Outputs TB5: die Bezeichnung gilt immer für Signal an, also 24V
@@ -152,10 +176,8 @@ setp hm2_5i25.0.7i76.0.0.output-08-invert true
 # Out9 loopback an In22 (für Watchdog)
 net watchdog-loopback-out => hm2_5i25.0.7i76.0.0.output-09
 
-# Out10 Kühlschmierung an
-# TODO ist im Schaltschrank als Toggle-Puls, wir wollen aber an/aus
-# deshalb auskommentiert
-# net coolant-flood => hm2_5i25.0.7i76.0.0.output-10
+# Kühlschmierung an: Nicht von CNC steuerbar, deshalb auskommentiert
+# net coolant-flood => ...
 
 # Out11 Schutzhaube freigeben (wenn aus, löst die Schutzhaube den Notaus aus)
 net haube-sperren => hm2_5i25.0.7i76.0.0.output-11
@@ -179,12 +201,17 @@ net program-is-paused halui.program.is-paused => hm2_5i25.0.7i76.0.0.output-15
 
 # Outputs TB5
 # Out0 Ampel weiß
-# TODO (wunsch) auch die Polycarbonat-Haube mit anzeigen. Dafür haben wir noch keinen Input.
-net futterhaube-offen => hm2_5i25.0.7i76.0.0.output-00 
+net futterhaube-oder-plexischutzhaube-offen => hm2_5i25.0.7i76.0.0.output-00 
 
 
 
-
+#######################################################
+# Oder-Gatter für "Futterhaube oder Plexischutzhaube offen" zur Ausgabe auf weißer Signalampel
+#######################################################
+loadrt or2 names=or2_haube_ampel
+net futterhaube-oder-plexischutzhaube-offen <= or2_haube_ampel.out
+net futterhaube-offen => or2_haube_ampel.in1
+net plexischutzhaube-offen => or2_haube_ampel.in2
 
 #######################################################
 # Notaus-Überwachung, auch Fehler-Eingänge Drives + Watchdog
@@ -237,7 +264,7 @@ net watchdog-ok <= watchdog.ok-out
 
 
 #######################################################
-# Logik Haubenfreigabe
+# Logik Freigabe Plexi-Schutzhaube
 # Haube sperren, wenn: spindle-on || (program-is-running && !tool-change)
 #######################################################
 loadrt not names=not_toolchange
@@ -263,9 +290,6 @@ net haube-sperren <= or2_haube_sperren.out
 # Spindle Encoder feedback
 #######################################################
 
-# spindle speed control
-net spindle-speed-cmd  motion.spindle-speed-out
-
 # 4000 steps/U
 setp hm2_5i25.0.encoder.00.scale 4000
 # TODO keine ahnung ob das geht... aber wie will man es testen?
@@ -275,29 +299,43 @@ setp hm2_5i25.0.encoder.00.quad-error-enable TRUE
 # TODO funktioniert gewindedrehen?
 # encoder reset control
 # hook up motion controller's sync output
-net spindle-index-enable motion.spindle-index-enable <=> hm2_5i25.0.encoder.00.index-enable
+net spindle-index-enable <=> hm2_5i25.0.encoder.00.index-enable
 
 # report our revolution count to the motion controller
-net spindle-pos hm2_5i25.0.encoder.00.position => motion.spindle-revs
+net spindle-pos <= hm2_5i25.0.encoder.00.position
 
 # for spindle velocity estimate
-loadrt lowpass names=lowpass_velocity
-loadrt scale names=scale_to_rpm
-net spindle-rps-raw hm2_5i25.0.encoder.00.velocity => lowpass_velocity.in
-net spindle-rps-filtered lowpass_velocity.out => scale_to_rpm.in motion.spindle-speed-in
-net spindle-rpm-filtered scale_to_rpm.out
-setp scale_to_rpm.gain 60
-setp lowpass_velocity.gain .07
-addf lowpass_velocity servo-thread
-addf scale_to_rpm servo-thread
+net spindle-rps-raw <= hm2_5i25.0.encoder.00.velocity 
+# further processing see spindle.hal
 
-# for at-speed detection
-loadrt near names=near_speed
-addf near_speed servo-thread
-setp near_speed.scale 1.1
-setp near_speed.difference 10
-net spindle-speed-cmd => near_speed.in1
-net spindle-rpm-filtered => near_speed.in2
-net spindle-at-speed near_speed.out motion.spindle-at-speed
 
-net  spindle-fwd <= motion.spindle-forward
+##################################################
+# Axis encoder (open loop!)
+# Aktuell nicht in den Feedback-Kreis eingebunden, sondern einfach nur als separate Messvariable
+##################################################
+
+
+### Z
+
+# (auskommentiert = Standardwerte)
+# setp    hm2_5i25.0.encoder.02.counter-mode 0
+# Hinweis zu Filter: Durch filter=1 wird die maximal mögliche Geschwindigkeit um ca. Faktor 5 reduziert. Dafür werden kurze Störimpulse weggefiltert.
+# Max. Verfahrgeschwindigkeit  8 MHz "muxed-sample-frequency" / 2 ((?) wegen Multiplexing) / 200 (Schritte/mm) / 16  (Filterung: 16 bei filter=1, sonst 3) = 1250 mm/s mit Filter.
+# Obacht, hier zählt der Spitzenwert, der durch mechanische Schwingungen deutlich höher sein kann als die Soll-Geschwindigkeit (max. 15 mm/s bei CNC).
+# setp    hm2_5i25.0.encoder.02.filter 1
+# setp    hm2_5i25.0.encoder.02.index-invert 0
+# setp    hm2_5i25.0.encoder.02.index-mask 0
+# setp    hm2_5i25.0.encoder.02.index-mask-invert 0
+
+setp    hm2_5i25.0.encoder.02.scale  [ENCODER_SCALE]SCALE_Z
+
+net z-pos-measured-raw-mm               <=  hm2_5i25.0.encoder.02.position
+net z-vel-measured               <=  hm2_5i25.0.encoder.02.velocity
+# net z-index-enable    .....  <=>  hm2_5i25.0.encoder.02.index-enable
+net z-pos-measured-rawcounts        <=  hm2_5i25.0.encoder.02.rawcounts
+
+# TODO quad-error-Signal verarbeiten
+
+### TODO: sobald Z funktioniert auch andere Achsen
+
+##############################

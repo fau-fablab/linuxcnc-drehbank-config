@@ -28,3 +28,5 @@ USER_COMMAND_FILE = ~/.axisrc
 # [mm/s]
 MAX_LINEAR_VELOCITY=20
 DEFAULT_LINEAR_VELOCITY=4
+
+##############################

@@ -1,10 +1,10 @@
 ##################
 # EINGÄNGE Endschalter
-# Diese Netze werden von Parport oder Simulation gefüttert
+# Diese Netze werden von MESA oder Simulation gefüttert
 
-net Xhomesw => axis.0.home-sw-in 
-#axis.0.neg-lim-sw-in
-net Zhomesw => axis.2.home-sw-in 
-#axis.0.neg-lim-sw-in
+net Xhomesw => joint.0.home-sw-in 
+#joint.0.neg-lim-sw-in
+net Zhomesw => joint.1.home-sw-in 
+#joint.0.neg-lim-sw-in
 
 ##############################
